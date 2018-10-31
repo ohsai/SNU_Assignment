@@ -1,0 +1,72 @@
+\documentclass{article}
+\usepackage{bm}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{listings}  
+\usepackage{graphicx}
+\usepackage{mdwlist}
+\usepackage[colorlinks=true]{hyperref}
+\usepackage{geometry}
+\geometry{margin=1in}
+\geometry{headheight=2in}
+\geometry{top=2in}
+\usepackage{palatino}
+%\renewcommand{\rmdefault}{palatino}
+\usepackage{fancyhdr}
+%\pagestyle{fancy}
+\rhead{}
+\lhead{}
+\chead{%
+  {\vbox{%
+      \vspace{2mm}
+      \large
+      Embedded Systems and Applications 4190.303C \hfill
+\\
+      Seoul National University
+      \\[4mm]
+      Homework \#(\textbf{2})\\
+      \textbf{Oh Hyun Seok}\\
+	\textbf{2014-13485}
+    }
+  }
+}
+
+
+\usepackage{paralist}
+
+\usepackage{todonotes}
+\setlength{\marginparwidth}{2.15cm}
+
+\usepackage{tikz}
+\usetikzlibrary{positioning,shapes,backgrounds}
+
+\begin{document}
+\pagestyle{fancy}
+
+%% Q1
+\section{Analyze Pascal VOC 2012(only segmentation)}
+Segmentation: Generating pixel-wise segmentations giving the class of the object visible at each pixel, or "background" otherwise.
+\subsection{class names}
+The twenty object classes that have been selected are:
+Person: person
+Animal: bird, cat, cow, dog, horse, sheep
+Vehicle: aeroplane, bicycle, boat, bus, car, motorbike, train
+Indoor: bottle, chair, dining table, potted plant, sofa, tv/monitor
+\subsection{image size}
+\subsection{number of images of each dataset}
+\subsection{the meaning of outline}
+%% Q2
+\section{Evaluation Metric: mIoU}
+\subsection{How to calculate mIoU with outline}
+\subsection{state-of-the-art on Pascal VOC 2012 Segmentation}
+%%Q3
+\section{Analyze DeepLab v3+}
+\subsection{Explain the architecture below in your own words}
+\subsubsection{Refer to PDF(Xception 65) for more detail}
+\subsubsection{Refer to PDF(MobileNet V2) for more detail}
+\subsection{Discuss why DeepLab v3+ gets better accuracy than other segmentation networks}
+\subsection{Run on a few images on two networks}
+\subsubsection{Network: MobileNet V2, Xception}
+\subsubsection{6 Classes}
+\subsection{e.g.}
+\end{document}

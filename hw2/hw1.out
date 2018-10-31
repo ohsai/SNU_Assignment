@@ -1,0 +1,17 @@
+\BOOKMARK [1][-]{section.1}{Analyze Pascal VOC 2012\(only segmentation\)}{}% 1
+\BOOKMARK [2][-]{subsection.1.1}{class names}{section.1}% 2
+\BOOKMARK [2][-]{subsection.1.2}{image size}{section.1}% 3
+\BOOKMARK [2][-]{subsection.1.3}{number of images of each dataset}{section.1}% 4
+\BOOKMARK [2][-]{subsection.1.4}{the meaning of outline}{section.1}% 5
+\BOOKMARK [1][-]{section.2}{Evaluation Metric: mIoU}{}% 6
+\BOOKMARK [2][-]{subsection.2.1}{How to calculate mIoU with outline}{section.2}% 7
+\BOOKMARK [2][-]{subsection.2.2}{state-of-the-art on Pascal VOC 2012 Segmentation}{section.2}% 8
+\BOOKMARK [1][-]{section.3}{Analyze DeepLab v3+}{}% 9
+\BOOKMARK [2][-]{subsection.3.1}{Explain the architecture below in your own words}{section.3}% 10
+\BOOKMARK [3][-]{subsubsection.3.1.1}{Refer to PDF\(Xception 65\) for more detail}{subsection.3.1}% 11
+\BOOKMARK [3][-]{subsubsection.3.1.2}{Refer to PDF\(MobileNet V2\) for more detail}{subsection.3.1}% 12
+\BOOKMARK [2][-]{subsection.3.2}{Discuss why DeepLab v3+ gets better accuracy than other segmentation networks}{section.3}% 13
+\BOOKMARK [2][-]{subsection.3.3}{Run on a few images on two networks}{section.3}% 14
+\BOOKMARK [3][-]{subsubsection.3.3.1}{Network: MobileNet V2, Xception}{subsection.3.3}% 15
+\BOOKMARK [3][-]{subsubsection.3.3.2}{6 Classes}{subsection.3.3}% 16
+\BOOKMARK [2][-]{subsection.3.4}{e.g.}{section.3}% 17
