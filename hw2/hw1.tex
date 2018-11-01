@@ -32,13 +32,9 @@
 }
 
 
-\usepackage{paralist}
 
-\usepackage{todonotes}
 \setlength{\marginparwidth}{2.15cm}
 
-\usepackage{tikz}
-\usetikzlibrary{positioning,shapes,backgrounds}
 
 \begin{document}
 \pagestyle{fancy}
@@ -46,15 +42,21 @@
 %% Q1
 \section{Analyze Pascal VOC 2012(only segmentation)}
 Segmentation: Generating pixel-wise segmentations giving the class of the object visible at each pixel, or "background" otherwise.
-\subsection{class names}
-The twenty object classes that have been selected are:
-Person: person
-Animal: bird, cat, cow, dog, horse, sheep
-Vehicle: aeroplane, bicycle, boat, bus, car, motorbike, train
+\subsection{Class names}
+The twenty object classes that have been selected are:\\
+Person: person\\
+Animal: bird, cat, cow, dog, horse, sheep\\
+Vehicle: aeroplane, bicycle, boat, bus, car, motorbike, train\\
 Indoor: bottle, chair, dining table, potted plant, sofa, tv/monitor
-\subsection{image size}
-\subsection{number of images of each dataset}
-\subsection{the meaning of outline}
+\subsection{Image size}
+images in dataset can have diverse sizes. They all have 3 channels (RGB) in common, but their width and height varies according to image. Their class segmentation and object segmentation images also have corresponding diverse image sizes. For instance, for segmentation train dataset there are 244 different image sizes. Their width varies from 112 pixels to 500 pixels, and height varies from 246 to 500 pixels.
+\subsection{Number of images of each dataset}
+train : 1464 images on VOC2012/ImageSets/Segmentation/train.txt\\
+val : 1449 images on VOC2012/ImageSets/Segmentation/val.txt\\
+trainval : 2913 images on VOC2012/ImageSets/Segmentation/trainval.txt\\
+trainaug : dataset from VOC2012 are augmented with \href{https://www.dropbox.com/s/oeu149j8qtbs1x0/SegmentationClassAug.zip?dl=0}{SegmentationClassAug dataset} made by \href{https://github.com/DrSleep/tensorflow-deeplab-resnet}{someone} from \href{http://home.bharathh.info/pubs/codes/SBD/download.html}{Semantic Boundaries Dataset (SBD)} leads to 10582 images for training.\\
+\subsection{Meaning of outline}
+On images at VOC2012/SegmentationObjects or VOC2012/SegmentationClass, you can see that images have white outlines in common. These outlines are indicating acceptable error of segmentation. When we compare ground truth image and our segmented image, our image should segment similar to ground truth image, with range of segmentation error on outline allowed. Segmented pixel covered by outline is masked and excluded on evaluation. I got this idea from PASCAL VOC 2012 devkit VOCevalseg.m file. \\
 %% Q2
 \section{Evaluation Metric: mIoU}
 \subsection{How to calculate mIoU with outline}
