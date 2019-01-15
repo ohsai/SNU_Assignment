@@ -5,8 +5,15 @@ ssh-keygen # just press enters for default create locations and no passwords
 cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
 chmod 600 ~/.ssh/authorized_keys
 cp ~/.ssh/id_rsa %PATH_TO_EXPORT%
+
 # On other devices
 cp %PATH_TO_EXPORT% ~/.ssh/id_rsa
 chmod ~/.ssh/id_rsa 400
 ssh localhost -p 8022 -i %PATH_TO_KEY-FILE%/%NAME_OF_KEY% 
 # -i $PATH_TO_FILE/filename is only required if the id_rsa file is not ~/.ssh/id_rsa
+vi ~/.bashrc
+  alias mobile='ssh %IPofMobile% -p 8022'
+  :wq
+source ~/.bashrc
+mobile
+
