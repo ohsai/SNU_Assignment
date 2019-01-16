@@ -45,8 +45,8 @@ public class Classifier {
 
     private static final int DIM_PIXEL_SIZE = 3;
 
-    private static final String MODEL_PATH = "inceptionV3_slim_2016.tflite";
-    private static final String LABEL_PATH = "labels_imagenet_slim.txt";
+    private static final String MODEL_PATH = "mobilenet_quant_v1_224.tflite";
+    private static final String LABEL_PATH = "labels.txt";
     private static final int ImageSizeX = 224;
     private static final int ImageSizeY = 224;
     private static final int NumBytesPerChannel = 4;
@@ -114,7 +114,8 @@ public class Classifier {
 
     /** Closes tflite to release resources. */
     public void close() {
-        tflite.close();
+        if(tflite != null)
+            tflite.close();
         tflite = null;
         tfliteModel = null;
     }
@@ -125,12 +126,13 @@ public class Classifier {
      * @return String
      */
     String classify(Image image){
-        /*
+
         Log.d(TAG, "Classifier.classify called");
         Random rng = new Random();
         int random_number = rng.nextInt(100 - 0) ;
         return String.valueOf(random_number) + "\n" + String.valueOf(random_number);
-        */
+
+        /*
         if (tflite == null) {
             Log.e(TAG, "Image classifier has not been initialized; Skipped.");
             return new String("Uninitialized Classifier.");
@@ -147,7 +149,9 @@ public class Classifier {
         long duration = endTime - startTime;
         result = result + "\n " + duration + "ms";
         return result;
+        */
     }
+    /*
     private void ImageToByteBuffer(Image image){
 
     }
@@ -157,4 +161,5 @@ public class Classifier {
     private String printTopK(){
 
     }
+    */
 }

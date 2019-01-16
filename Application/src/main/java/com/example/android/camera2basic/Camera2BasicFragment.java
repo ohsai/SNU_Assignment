@@ -753,6 +753,8 @@ public class Camera2BasicFragment extends Fragment
             NNBackgroundThread.join();
             NNBackgroundThread = null;
             NNBackgroundHandler = null;
+            if(NNClassifier != null)
+                NNClassifier.close();
             NNClassifier = null;
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -1071,11 +1073,13 @@ public class Camera2BasicFragment extends Fragment
         @Override
         public void run() {
             Log.d(TAG, "NN Background Thread procedure called");
+            if(NNClassifier == null)
+                return;
             NN_state_variable = true;
-            String NN_result = NNClassifier.classify(mImage);
-            if (mImage != null)
-                mImage.close();
-            showText(NN_result);
+                String NN_result = NNClassifier.classify(mImage);
+                if (mImage != null)
+                    mImage.close();
+                showText(NN_result);
             NN_state_variable = false;
         }
 
