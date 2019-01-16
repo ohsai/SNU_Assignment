@@ -6,7 +6,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.0.1'
+        classpath 'com.android.tools.build:gradle:3.2.1'
     }
 }
 
@@ -22,6 +22,7 @@ dependencies {
     compile "com.android.support:support-v13:27.0.2"
     compile "com.android.support:cardview-v7:27.0.2"
     compile "com.android.support:appcompat-v7:27.0.2"
+    compile "org.tensorflow:tensorflow-lite:0.0.0-nightly"
 }
 
 // The sample build uses multiple directories to

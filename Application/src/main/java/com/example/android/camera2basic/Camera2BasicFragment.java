@@ -44,11 +44,14 @@ import android.media.ImageReader;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.os.SystemClock;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
+import android.text.SpannableString;
+import android.text.SpannableStringBuilder;
 import android.util.Log;
 import android.util.Size;
 import android.util.SparseIntArray;
@@ -57,6 +60,7 @@ import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.File;
@@ -87,6 +91,9 @@ public class Camera2BasicFragment extends Fragment
         ORIENTATIONS.append(Surface.ROTATION_180, 270);
         ORIENTATIONS.append(Surface.ROTATION_270, 180);
     }
+    //my add
+    private Classifier NNClassifier;
+    private static boolean NN_state_variable;
 
     /**
      * Tag for the {@link Log}.
@@ -223,11 +230,27 @@ public class Camera2BasicFragment extends Fragment
      * A {@link Handler} for running tasks in the background.
      */
     private Handler mBackgroundHandler;
+    // # my add
+    /**
+     * An additional thread for running tasks that shouldn't block the UI.
+     */
+    private HandlerThread NNBackgroundThread;
+
+    /**
+     * A {@link Handler} for running tasks in the background.
+     */
+    private Handler NNBackgroundHandler;
+
 
     /**
      * An {@link ImageReader} that handles still image capture.
      */
     private ImageReader mImageReader;
+    // my add
+    /**
+     * An {@link ImageReader} that handles preview image processing.
+     */
+    private ImageReader mPreviewImageReader;
 
     /**
      * This is the output file for our picture.
@@ -242,11 +265,35 @@ public class Camera2BasicFragment extends Fragment
             = new ImageReader.OnImageAvailableListener() {
 
         @Override
-        public void onImageAvailable(ImageReader reader) {
-            mBackgroundHandler.post(new ImageSaver(reader.acquireNextImage(), mFile));
-        }
+        public void onImageAvailable(ImageReader reader) { // # my add
+            Image image = reader.acquireNextImage();
+            if(image == null)
+                return;
+            //Log.d(TAG, "Image save of width : "+String.valueOf(image.getWidth()) + ", height : " + String.valueOf(image.getHeight()) +", format : " + String.valueOf(image.getFormat()));
 
+            mBackgroundHandler.post(new ImageSaver(image, mFile));
+        }
     };
+    /**
+     * This a callback object for the {@link ImageReader}. "onImageAvailable" will be called when a
+     * still image is ready to be saved.
+     */
+    // # my add
+    private final ImageReader.OnImageAvailableListener mOnPreviewImageAvailableListener
+            = new ImageReader.OnImageAvailableListener() {
+
+        @Override
+        public void onImageAvailable(ImageReader reader) { // # my add
+            Image image = reader.acquireNextImage();
+            Log.d(TAG, " Preview Image frame of width : " + String.valueOf(image.getWidth()) + ", height : " + String.valueOf(image.getHeight()) + ", format : " + String.valueOf(image.getFormat()));
+            if (image == null)
+                return;
+            if(!NN_state_variable) {
+                NNBackgroundHandler.post(new NNtoImage(image));
+            }
+        }
+    };
+
 
     /**
      * {@link CaptureRequest.Builder} for the camera preview
@@ -429,18 +476,20 @@ public class Camera2BasicFragment extends Fragment
         view.findViewById(R.id.picture).setOnClickListener(this);
         view.findViewById(R.id.info).setOnClickListener(this);
         mTextureView = (AutoFitTextureView) view.findViewById(R.id.texture);
+        textView = (TextView) view.findViewById(R.id.textView2);
     }
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
-        mFile = new File(getActivity().getExternalFilesDir(null), "pic.jpg");
+        mFile = new File(getActivity().getExternalFilesDir(null), "pic.jpg"); // my add required for diverse files
     }
 
     @Override
     public void onResume() {
         super.onResume();
         startBackgroundThread();
+        startNNBackgroundThread();
 
         // When the screen is turned off and turned back on, the SurfaceTexture is already
         // available, and "onSurfaceTextureAvailable" will not be called. In that case, we can open
@@ -457,6 +506,7 @@ public class Camera2BasicFragment extends Fragment
     public void onPause() {
         closeCamera();
         stopBackgroundThread();
+        stopNNBackgroundThread();
         super.onPause();
     }
 
@@ -512,11 +562,16 @@ public class Camera2BasicFragment extends Fragment
                 Size largest = Collections.max(
                         Arrays.asList(map.getOutputSizes(ImageFormat.JPEG)),
                         new CompareSizesByArea());
+                // # my add
                 mImageReader = ImageReader.newInstance(largest.getWidth(), largest.getHeight(),
                         ImageFormat.JPEG, /*maxImages*/2);
+                mPreviewImageReader = ImageReader.newInstance(largest.getWidth()/16, largest.getHeight()/16,
+                        ImageFormat.YUV_420_888, /*maxImages*/2);
+                // # my add
                 mImageReader.setOnImageAvailableListener(
                         mOnImageAvailableListener, mBackgroundHandler);
-
+                mPreviewImageReader.setOnImageAvailableListener(
+                        mOnPreviewImageAvailableListener, NNBackgroundHandler);
                 // Find out if we need to swap dimension to get the preview size relative to sensor
                 // coordinate.
                 int displayRotation = activity.getWindowManager().getDefaultDisplay().getRotation();
@@ -639,6 +694,11 @@ public class Camera2BasicFragment extends Fragment
                 mImageReader.close();
                 mImageReader = null;
             }
+            // # my add
+            if (null != mPreviewImageReader){
+                mPreviewImageReader.close();
+                mPreviewImageReader = null;
+            }
         } catch (InterruptedException e) {
             throw new RuntimeException("Interrupted while trying to lock camera closing.", e);
         } finally {
@@ -668,6 +728,36 @@ public class Camera2BasicFragment extends Fragment
             e.printStackTrace();
         }
     }
+    // my add
+    /**
+     * Starts a background thread and its {@link Handler}.
+     */
+    private void startNNBackgroundThread() {
+        NNBackgroundThread = new HandlerThread("CameraNNBackground");
+        NNBackgroundThread.start();
+        NNBackgroundHandler = new Handler(NNBackgroundThread.getLooper());
+        try{
+            NNClassifier = new Classifier(getActivity());
+        }catch(IOException e){
+            Log.d(TAG, "Failed to load Classifier",e);
+            NNClassifier = null;
+        }
+    }
+
+    /**
+     * Stops the background thread and its {@link Handler}.
+     */
+    private void stopNNBackgroundThread() {
+        NNBackgroundThread.quitSafely();
+        try {
+            NNBackgroundThread.join();
+            NNBackgroundThread = null;
+            NNBackgroundHandler = null;
+            NNClassifier = null;
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
 
     /**
      * Creates a new {@link CameraCaptureSession} for camera preview.
@@ -683,13 +773,22 @@ public class Camera2BasicFragment extends Fragment
             // This is the output Surface we need to start preview.
             Surface surface = new Surface(texture);
 
+            // # my add
+            Surface mPreviewImageSurface = mPreviewImageReader.getSurface();
+            //Surface mImageSurface = ;
+
+
             // We set up a CaptureRequest.Builder with the output Surface.
             mPreviewRequestBuilder
                     = mCameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
             mPreviewRequestBuilder.addTarget(surface);
 
+            // # my add
+            mPreviewRequestBuilder.addTarget(mPreviewImageSurface);
+            //mPreviewRequestBuilder.addTarget(mImageSurface);
+
             // Here, we create a CameraCaptureSession for camera preview.
-            mCameraDevice.createCaptureSession(Arrays.asList(surface, mImageReader.getSurface()),
+            mCameraDevice.createCaptureSession(Arrays.asList(surface, mPreviewImageSurface,mImageReader.getSurface()),
                     new CameraCaptureSession.StateCallback() {
 
                         @Override
@@ -953,6 +1052,55 @@ public class Camera2BasicFragment extends Fragment
             }
         }
 
+    }
+    /**
+     * apply NN to image frame on background thread procedure
+     * my add
+     */
+    private class NNtoImage implements Runnable {
+
+        /**
+         * The image
+         */
+        private final Image mImage;
+
+        NNtoImage(Image image) {
+            mImage = image;
+        }
+
+        @Override
+        public void run() {
+            Log.d(TAG, "NN Background Thread procedure called");
+            NN_state_variable = true;
+            String NN_result = NNClassifier.classify(mImage);
+            if (mImage != null)
+                mImage.close();
+            showText(NN_result);
+            NN_state_variable = false;
+        }
+
+    }
+    // my add
+    TextView textView;
+    private void showText(String s){
+        SpannableStringBuilder builder = new SpannableStringBuilder();
+        SpannableString cur_str = new SpannableString(s);
+        builder.append(cur_str);
+        showText(builder);
+    }
+
+    private void showText(final SpannableStringBuilder builder){
+        final Activity activity = getActivity();
+        if (activity != null){
+            activity.runOnUiThread(
+                    new Runnable() {
+                        @Override
+                        public void run() {
+                            textView.setText(builder,TextView.BufferType.SPANNABLE);
+                        }
+                    }
+            );
+        }
     }
 
     /**
